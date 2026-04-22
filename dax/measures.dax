@@ -1,0 +1,168 @@
+-- ============================================================
+-- Bank Transaction Analysis — DAX Measures
+-- Table: Sheet1
+-- ============================================================
+
+
+-- ── Core aggregates ─────────────────────────────────────────
+
+Total Transactions =
+    COUNTROWS(Sheet1)
+
+Total Inflow =
+    CALCULATE(
+        SUM(Sheet1[Amount]),
+        Sheet1[Direction] = "IN"
+    )
+
+Total Outflow =
+    CALCULATE(
+        SUM(Sheet1[Amount]),
+        Sheet1[Direction] = "OUT"
+    )
+
+Total Turnover =
+    "$" & SUBSTITUTE(FORMAT(SUM(Sheet1[Amount]) / 1000000, "0.00"), ",", ".") & "M"
+
+Total Turnover Line =
+    SUM(Sheet1[Amount])
+
+Net Cash Flow =
+    CALCULATE(SUM(Sheet1[Amount]), Sheet1[Direction] = "IN") -
+    CALCULATE(SUM(Sheet1[Amount]), Sheet1[Direction] = "OUT")
+
+Bank Count =
+    DISTINCTCOUNT(Sheet1[Bank])
+
+
+-- ── Suspicious activity ──────────────────────────────────────
+
+Suspicious Count =
+    CALCULATE(
+        COUNTROWS(Sheet1),
+        Sheet1[IsSuspicious] = 1
+    )
+
+Suspicious % =
+    DIVIDE([Suspicious Count], [Total Transactions], 0)
+
+Suspicious Amount CP =
+    CALCULATE(
+        SUM(Sheet1[Amount]),
+        Sheet1[IsSuspicious] = 1
+    )
+
+Suspicious Amount Monthly =
+    CALCULATE(
+        SUM(Sheet1[Amount]),
+        Sheet1[IsSuspicious] = 1
+    )
+
+Flagged Counterparties =
+    CALCULATE(
+        DISTINCTCOUNT(Sheet1[Counterparty]),
+        Sheet1[IsSuspicious] = 1
+    )
+
+Round Number Count =
+    CALCULATE(
+        COUNTROWS(Sheet1),
+        Sheet1[IsRoundNumber] = 1
+    )
+
+
+-- ── Counterparty ─────────────────────────────────────────────
+
+New Counterparties =
+    CALCULATE(
+        DISTINCTCOUNT(Sheet1[Counterparty]),
+        Sheet1[IsNewCounterparty] = 1
+    )
+
+CounterpartyColor =
+    IF(
+        CALCULATE(
+            COUNTROWS(Sheet1),
+            Sheet1[IsSuspicious] = 1
+        ) > 0,
+        "#C0392B",
+        "#1E6FCF"
+    )
+
+CounterpartyRisk =
+    IF(
+        CALCULATE(
+            COUNTROWS(Sheet1),
+            Sheet1[IsSuspicious] = 1
+        ) > 0,
+        "Suspicious",
+        "Normal"
+    )
+
+CP Period =
+    VAR _min = CALCULATE(MIN(Sheet1[Date]), Sheet1[IsSuspicious] = 1)
+    VAR _max = CALCULATE(MAX(Sheet1[Date]), Sheet1[IsSuspicious] = 1)
+    VAR _minM = FORMAT(_min, "MMM", "en-GB")
+    VAR _maxM = FORMAT(_max, "MMM", "en-GB")
+    VAR _minY = "'" & FORMAT(_min, "YY", "en-GB")
+    VAR _maxY = "'" & FORMAT(_max, "YY", "en-GB")
+    RETURN
+        IF(
+            YEAR(_min) = YEAR(_max),
+            _minM & " – " & _maxM & " " & _maxY,
+            _minM & " " & _minY & " – " & _maxM & " " & _maxY
+        )
+
+CP Start Month =
+    CALCULATE(
+        MIN(Sheet1[MonthNum]),
+        Sheet1[IsSuspicious] = 1
+    )
+
+CP End Month =
+    CALCULATE(
+        MAX(Sheet1[MonthNum]),
+        Sheet1[IsSuspicious] = 1
+    )
+
+
+-- ── Labels ───────────────────────────────────────────────────
+
+Total Transactions Label =
+    SUBSTITUTE(FORMAT([Total Transactions], "# ##0"), " ", ",")
+
+Avg per Month Label =
+    VAR _min    = MIN(Sheet1[Date])
+    VAR _max    = MAX(Sheet1[Date])
+    VAR _months = DATEDIFF(_min, _max, MONTH) + 1
+    RETURN
+        "avg " & FORMAT(DIVIDE([Total Transactions], _months), "#,##0") & " / month"
+
+Suspicious Pct Label =
+    FORMAT([Suspicious %], "0.0%") & " of total"
+
+New Counterparties Label =
+    FORMAT([New Counterparties], "#,##0") & " new this period"
+
+Inflow % Label =
+    "← Inflow " & FORMAT(DIVIDE([Total Inflow], [Total Inflow] + [Total Outflow], 0), "0%")
+
+Outflow % Label =
+    FORMAT(DIVIDE([Total Outflow], [Total Inflow] + [Total Outflow], 0), "0%") & " Outflow →"
+
+Inflow Outflow Label =
+    "In: " & SUBSTITUTE(FORMAT(DIVIDE([Total Inflow], 1000000), "0.0"), ",", ".") & "M · " &
+    "Out: " & SUBSTITUTE(FORMAT(DIVIDE([Total Outflow], 1000000), "0.0"), ",", ".") & "M"
+
+Risk Label =
+    CALCULATE([Suspicious Count]) & " flags"
+
+Top Risk Bank =
+    "highest risk: " &
+    TOPN(1, VALUES(Sheet1[Bank]), CALCULATE(COUNTROWS(Sheet1), Sheet1[IsSuspicious] = 1), DESC)
+
+
+-- ── Utility ──────────────────────────────────────────────────
+
+Dummy =
+    1

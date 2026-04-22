@@ -1,0 +1,92 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "padding": 0,
+  "autosize": {"type": "fit", "contains": "padding"},
+  "config": {
+    "view": {"stroke": null},
+    "bar": {"stroke": null, "strokeWidth": 0},
+    "axisY": {"bandPosition": 0.5}
+  },
+  "data": {"name": "dataset"},
+  "transform": [
+    {
+      "aggregate": [
+        {"op": "sum", "field": "Total Turnover Line", "as": "Volume"},
+        {"op": "sum", "field": "IsSuspicious", "as": "Suspicious"}
+      ],
+      "groupby": ["Counterparty"]
+    },
+    {
+      "window": [{"op": "rank", "as": "Rank"}],
+      "sort": [{"field": "Volume", "order": "descending"}]
+    },
+    {"filter": "datum.Rank <= 10"},
+    {
+      "window": [{"op": "max", "field": "Volume", "as": "MaxVolume"}],
+      "frame": [null, null]
+    },
+    {"calculate": "datum.Volume / datum.MaxVolume", "as": "Pct"},
+    {"calculate": "format(datum.Volume / 1000000, '.1f') + 'M'", "as": "Label"}
+  ],
+  "width": "container",
+  "height": {"step": 24.5},
+  "layer": [
+    {
+      "mark": {
+        "type": "bar",
+        "stroke": null,
+        "strokeWidth": 0,
+        "height": 20,
+        "cornerRadiusTopLeft": 6,
+        "cornerRadiusBottomLeft": 6,
+        "cornerRadiusTopRight": 6,
+        "cornerRadiusBottomRight": 6
+      },
+      "encoding": {
+        "y": {
+          "field": "Counterparty",
+          "type": "nominal",
+          "sort": {"field": "Volume", "order": "descending"},
+          "axis": {
+            "labelFontSize": 11,
+            "labelLimit": 200,
+            "labelColor": "#6B7280",
+            "ticks": false,
+            "domain": false,
+            "title": null,
+            "labelPadding": 8
+          }
+        },
+        "x": {
+          "field": "Pct",
+          "type": "quantitative",
+          "axis": null,
+          "scale": {"domain": [0, 0.92]}
+        },
+        "color": {
+          "condition": {"test": "datum.Suspicious > 0", "value": "#E87D77"},
+          "value": "#E2E4E8"
+        }
+      }
+    },
+    {
+      "mark": {
+        "type": "text",
+        "align": "left",
+        "dx": 6,
+        "fontSize": 11,
+        "fontWeight": "normal",
+        "color": "#6B7280"
+      },
+      "encoding": {
+        "y": {
+          "field": "Counterparty",
+          "type": "nominal",
+          "sort": {"field": "Volume", "order": "descending"}
+        },
+        "x": {"field": "Pct", "type": "quantitative"},
+        "text": {"field": "Label"}
+      }
+    }
+  ]
+}

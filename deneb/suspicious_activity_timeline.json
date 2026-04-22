@@ -1,0 +1,86 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "data": { "name": "dataset" },
+  "width": 340, "height": 150,
+  "background": "transparent",
+  "padding": {"left": 0, "right": 0, "top": 0, "bottom": 0},
+  "config": { "view": { "stroke": null } },
+  "transform": [
+    { "filter": "datum['Suspicious Amount CP'] > 0" },
+    { "window": [{"op":"row_number","as":"_rank"}], "sort": [{"field":"Suspicious Amount CP","order":"descending"}] },
+    { "calculate": "100 + (datum['CP Start Month'] - 1) * (110 / 11)", "as": "bx0" },
+    { "calculate": "100 + (datum['CP End Month'] - 1) * (110 / 6.8)", "as": "bx_raw" },
+    { "calculate": "datum.bx_raw <= datum.bx0 ? datum.bx0 + 12 : datum.bx_raw", "as": "bx1" },
+    { "calculate": "datum.bx0 + 10", "as": "bx_dot" },
+    { "calculate": "25 + (datum._rank - 1) * 42", "as": "rc" },
+    { "calculate": "datum.rc",      "as": "ty_main"   },
+    { "calculate": "datum.rc - 17", "as": "ty_period" },
+    {
+      "calculate": "datum.Counterparty === 'VANTAGE GLOBAL SOLUTIONS LLC' ? 'VANTAGE GLOBAL' : datum.Counterparty === 'DELTA FINANCIAL CORP' ? 'DELTA FINANCIAL' : datum.Counterparty === 'PACIFIC RIM VENTURES INC' ? 'PACIFIC RIM' : datum.Counterparty === 'SUNRISE ASSET GROUP LLC' ? 'SUNRISE ASSET' : datum.Counterparty",
+      "as": "shortName"
+    },
+    { "calculate": "format(datum['Suspicious Amount CP'] / 1000000, '.1f') + 'M · ' + datum['Suspicious Count'] + ' ct.'", "as": "lV" }
+  ],
+  "layer": [
+    {
+      "mark": {
+        "type": "rect",
+        "height": 21,
+        "cornerRadiusTopLeft": 6,
+        "cornerRadiusBottomLeft": 6,
+        "cornerRadiusTopRight": 6,
+        "cornerRadiusBottomRight": 6
+      },
+      "encoding": {
+        "x":      { "field": "bx0", "type": "quantitative", "scale": {"domain":[0,340]}, "axis": null },
+        "x2":     { "field": "bx1" },
+        "y":      { "field": "ty_main", "type": "quantitative", "scale": {"domain":[0,150]}, "axis": null },
+        "color":  { "value": "#FDDCDC" }
+      }
+    },
+    {
+      "mark": {
+        "type": "rect",
+        "height": 20,
+        "cornerRadiusTopLeft": 6,
+        "cornerRadiusBottomLeft": 6,
+        "cornerRadiusTopRight": 4,
+        "cornerRadiusBottomRight": 4
+      },
+      "encoding": {
+        "x":      { "field": "bx0",    "type": "quantitative", "scale": {"domain":[0,370]}, "axis": null },
+        "x2":     { "field": "bx_dot" },
+        "y":      { "field": "ty_main","type": "quantitative", "scale": {"domain":[0,150]}, "axis": null },
+        "color":  { "value": "#E87D77" },
+        "opacity":{ "value": 1 }
+      }
+    },
+    {
+      "mark": { "type": "text", "align": "left", "fontSize": 11, "baseline": "middle" },
+      "encoding": {
+        "x":    { "value": 2 },
+        "y":    { "field": "ty_main", "type": "quantitative", "scale": {"domain":[0,150]}, "axis": null },
+        "text": { "field": "shortName" },
+        "color":{ "value": "#6B7280" }
+      }
+    },
+    {
+      "mark": { "type": "text", "align": "right", "fontSize": 11.5, "baseline": "middle" },
+      "encoding": {
+        "x":    { "value": 338 },
+        "y":    { "field": "ty_main", "type": "quantitative", "scale": {"domain":[0,150]}, "axis": null },
+        "text": { "field": "lV" },
+        "color":{ "value": "#6B7280" }
+      }
+    },
+    {
+      "mark": { "type": "text", "align": "left", "fontSize": 9, "baseline": "middle", "dx": 14 },
+      "encoding": {
+        "x":    { "field": "bx0", "type": "quantitative", "scale": {"domain":[0,340]}, "axis": null },
+        "y":    { "field": "ty_period", "type": "quantitative", "scale": {"domain":[0,150]}, "axis": null },
+        "text": { "field": "CP Period" },
+        "color":{ "value": "#7A8A9E" }
+      }
+    }
+  ]
+}

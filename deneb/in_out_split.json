@@ -1,0 +1,53 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "padding": 0,
+  "autosize": {"type": "fit", "contains": "padding"},
+  "config": {
+    "view": {"stroke": null},
+    "bar": {"stroke": null, "strokeWidth": 0}
+  },
+  "data": {"name": "dataset"},
+  "transform": [
+    {
+      "fold": ["Total Inflow", "Total Outflow"],
+      "as": ["Direction", "Value"]
+    },
+    {
+      "aggregate": [{"op": "sum", "field": "Value", "as": "Total"}],
+      "groupby": ["Direction"]
+    },
+    {
+      "window": [{"op": "sum", "field": "Total", "as": "GrandTotal"}],
+      "frame": [null, null]
+    },
+    {"calculate": "datum.Total / datum.GrandTotal", "as": "Pct"}
+  ],
+  "width": "container",
+  "height": 20,
+  "mark": {
+    "type": "bar",
+    "stroke": null,
+    "strokeWidth": 0,
+    "cornerRadiusTopLeft": 6,
+    "cornerRadiusBottomLeft": 6,
+    "cornerRadiusTopRight": 6,
+    "cornerRadiusBottomRight": 6
+  },
+  "encoding": {
+    "x": {
+      "field": "Pct",
+      "type": "quantitative",
+      "stack": "normalize",
+      "axis": null
+    },
+    "color": {
+      "field": "Direction",
+      "type": "nominal",
+      "scale": {
+        "domain": ["Total Inflow", "Total Outflow"],
+        "range": ["#E8EBF0", "#ABCAEB"]
+      },
+      "legend": null
+    }
+  }
+}

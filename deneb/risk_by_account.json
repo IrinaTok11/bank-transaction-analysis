@@ -1,0 +1,178 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "padding": {"left": 0, "right": 0, "top": 4, "bottom": 5},
+  "autosize": {"type": "fit", "contains": "padding"},
+  "config": {"view": {"stroke": null}, "concat": {"spacing": 7}},
+  "data": {"name": "dataset"},
+  "transform": [
+    {
+      "calculate": "datum['Total Transactions'] > 0 ? datum['Suspicious Count'] / datum['Total Transactions'] : 0",
+      "as": "RiskRatio"
+    },
+    {
+      "calculate": "0.30",
+      "as": "FullBar"
+    },
+    {
+      "window": [{"op": "mean", "field": "RiskRatio", "as": "AvgRisk"}],
+      "frame": [null, null]
+    },
+    {
+      "window": [{"op": "rank", "as": "Rank"}],
+      "sort": [{"field": "RiskRatio", "order": "descending"}]
+    },
+    {
+      "calculate": "datum.Bank + '  ' + datum['Suspicious Count'] + ' / ' + datum['Total Transactions']",
+      "as": "RowLabel"
+    },
+    {
+      "calculate": "format(datum.RiskRatio * 100, '.1f') + '%'",
+      "as": "PctLabel"
+    },
+    {
+      "calculate": "'avg ' + format(datum.AvgRisk * 100, '.1f') + '%'",
+      "as": "AvgLabel"
+    }
+  ],
+  "hconcat": [
+    {
+      "width": 70,
+      "height": {"step": 29.5},
+      "mark": {
+        "type": "text",
+        "align": "left",
+        "baseline": "middle",
+        "fontSize": 11,
+        "fontWeight": 180,
+        "color": "#6B7280"
+      },
+      "encoding": {
+        "y": {
+          "field": "RowLabel",
+          "type": "nominal",
+          "sort": {"field": "Rank", "order": "ascending"},
+          "axis": null,
+          "scale": {"paddingInner": 0.2, "paddingOuter": 0.1}
+        },
+        "x": {"value": 0},
+        "text": {"field": "RowLabel"}
+      }
+    },
+    {
+      "width": 235,
+      "height": {"step": 24.5},
+      "layer": [
+        {
+          "mark": {
+            "type": "bar",
+            "height": 20,
+            "cornerRadiusTopLeft": 6,
+            "cornerRadiusBottomLeft": 6,
+            "cornerRadiusTopRight": 6,
+            "cornerRadiusBottomRight": 6,
+            "color": "#E8EBF0"
+          },
+          "encoding": {
+            "y": {
+              "field": "RowLabel",
+              "type": "nominal",
+              "sort": {"field": "Rank", "order": "ascending"},
+              "axis": null,
+              "scale": {"paddingInner": 0.25, "paddingOuter": 0.1}
+            },
+            "x": {
+              "field": "FullBar",
+              "type": "quantitative",
+              "axis": null,
+              "scale": {"domain": [0, 0.3]}
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "bar",
+            "height": 20,
+            "cornerRadiusTopLeft": 6,
+            "cornerRadiusBottomLeft": 6,
+            "cornerRadiusTopRight": 6,
+            "cornerRadiusBottomRight": 6,
+            "color": "#E87D77"
+          },
+          "encoding": {
+            "y": {
+              "field": "RowLabel",
+              "type": "nominal",
+              "sort": {"field": "Rank", "order": "ascending"},
+              "axis": null,
+              "scale": {"paddingInner": 0.25, "paddingOuter": 0.1}
+            },
+            "x": {
+              "field": "RiskRatio",
+              "type": "quantitative",
+              "axis": null,
+              "scale": {"domain": [0, 0.3]}
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "rule",
+            "color": "#1F2A44",
+            "strokeWidth": 2.5,
+            "opacity": 0.1            
+          },
+          "encoding": {
+            "x": {
+              "field": "AvgRisk",
+              "type": "quantitative",
+              "scale": {"domain": [0, 0.3]}
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "baseline": "bottom",
+            "fontSize": 9,
+            "color": "#B8BEC8",
+            "fontWeight": "normal",
+            "dx": 4,
+            "dy": 4
+          },
+          "encoding": {
+            "x": {
+              "field": "AvgRisk",
+              "type": "quantitative",
+              "scale": {"domain": [0, 0.3]}
+            },
+            "y": {"value":105},
+            "text": {"field": "AvgLabel"}
+          }
+        }
+      ]
+    },
+    {
+      "width": 36,
+      "height": {"step": 29.5},
+      "mark": {
+        "type": "text",
+        "align": "right",
+        "baseline": "middle",
+        "fontSize": 10.5,
+        "color": "#6B7280"
+      },
+      "encoding": {
+        "y": {
+          "field": "RowLabel",
+          "type": "nominal",
+          "sort": {"field": "Rank", "order": "ascending"},
+          "axis": null,
+          "scale": {"paddingInner": 0.25, "paddingOuter": 0.1}
+        },
+        "x": {"expr": "width"},
+        "text": {"field": "PctLabel"}
+      }
+    }
+  ]
+}
